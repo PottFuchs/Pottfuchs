@@ -1,12 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pott Fuchs – Bewertungshelfer</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icon-192.png" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <script src="service-worker.js" defer></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; color: #333; }
     h1 { color: #e65100; }
@@ -16,11 +16,13 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     textarea { width: 100%; height: 150px; margin-top: 10px; }
-    button.copy-btn { margin-top: 10px; background: #e65100; color: white; padding: 10px; border: none; cursor: pointer; }
+    button { margin-top: 10px; background: #e65100; color: white; padding: 10px; border: none; cursor: pointer; }
+    footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #777; }
   </style>
 </head>
 <body>
   <h1>Pott Fuchs – Bewertungshelfer</h1>
+
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('aliexpress')">AliExpress</button>
     <button class="tab-btn" onclick="showTab('amazon')">Amazon</button>
@@ -28,19 +30,26 @@
   </div>
 
   <div id="aliexpress" class="tab-content active">
-    <textarea id="text-aliexpress">Hier deine AliExpress-Bewertung einfügen oder bearbeiten...</textarea>
-    <button class="copy-btn" onclick="copyText('text-aliexpress')">Text kopieren</button>
+    <textarea id="text-aliexpress">Hier deine AliExpress-Bewertung...</textarea>
+    <button onclick="copyText('text-aliexpress')">Text kopieren</button>
+    <button onclick="saveText('aliexpress')">Text speichern</button>
   </div>
 
   <div id="amazon" class="tab-content">
-    <textarea id="text-amazon">Hier deine Amazon-Bewertung einfügen oder bearbeiten...</textarea>
-    <button class="copy-btn" onclick="copyText('text-amazon')">Text kopieren</button>
+    <textarea id="text-amazon">Hier deine Amazon-Bewertung...</textarea>
+    <button onclick="copyText('text-amazon')">Text kopieren</button>
+    <button onclick="saveText('amazon')">Text speichern</button>
   </div>
 
   <div id="google" class="tab-content">
-    <textarea id="text-google">Hier deine Google-Bewertung einfügen oder bearbeiten...</textarea>
-    <button class="copy-btn" onclick="copyText('text-google')">Text kopieren</button>
+    <textarea id="text-google">Hier deine Google-Bewertung...</textarea>
+    <button onclick="copyText('text-google')">Text kopieren</button>
+    <button onclick="saveText('google')">Text speichern</button>
   </div>
+
+  <footer>
+    © 2025 Björn Grüdel | <a href="#impressum">Impressum</a> | <a href="#datenschutz">Datenschutz</a>
+  </footer>
 
   <script>
     function showTab(id) {
@@ -55,6 +64,24 @@
       textarea.select();
       document.execCommand('copy');
       alert('Text kopiert!');
+    }
+
+    function saveText(tab) {
+      const text = document.getElementById('text-' + tab).value;
+      localStorage.setItem('review-' + tab, text);
+      alert('Text gespeichert!');
+    }
+
+    window.onload = function() {
+      ['aliexpress', 'amazon', 'google'].forEach(tab => {
+        const saved = localStorage.getItem('review-' + tab);
+        if (saved) {
+          document.getElementById('text-' + tab).value = saved;
+        }
+      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+      }
     }
   </script>
 </body>
