@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pott Fuchs – Bewertungshelfer</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <script src="service-worker.js" defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; color: #333; }
+    h1 { color: #e65100; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+    .tab-btn { padding: 10px; background: #ddd; border: none; cursor: pointer; }
+    .tab-btn.active { background: #e65100; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    textarea { width: 100%; height: 250px; margin-top: 10px; }
+    button { margin-top: 10px; background: #e65100; color: white; padding: 10px; border: none; cursor: pointer; }
+    footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #777; }
+    footer a { color: #e65100; text-decoration: none; margin: 0 5px; }
+  </style>
+</head>
+<body>
+  <h1>Pott Fuchs – Bewertungshelfer</h1>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('aliexpress')">AliExpress</button>
+    <button class="tab-btn" onclick="showTab('amazon')">Amazon</button>
+    <button class="tab-btn" onclick="showTab('google')">Google</button>
+  </div>
+
+  <div id="aliexpress" class="tab-content active">
+    <textarea id="text-aliexpress"></textarea>
+    <button onclick="copyText('text-aliexpress')">Text kopieren</button>
+    <button onclick="saveText('aliexpress')">Text speichern</button>
+  </div>
+
+  <div id="amazon" class="tab-content">
+    <textarea id="text-amazon"></textarea>
+    <button onclick="copyText('text-amazon')">Text kopieren</button>
+    <button onclick="saveText('amazon')">Text speichern</button>
+  </div>
+
+  <div id="google" class="tab-content">
+    <textarea id="text-google"></textarea>
+    <button onclick="copyText('text-google')">Text kopieren</button>
+    <button onclick="saveText('google')">Text speichern</button>
+  </div>
+
+  <footer>
+    © 2025 Björn Grüdel | <a href="#impressum" onclick="showImpressum()">Impressum</a> | <a href="#datenschutz" onclick="showDatenschutz()">Datenschutz</a>
+  </footer>
+
+  <script>
+    const defaultText = `Du agierst als Ghostwriter für authentische Kundenrezensionen auf AliExpress.
+Verfasse eine realistisch klingende, grammatikalisch korrekte und sachlich-kritische Bewertung zu folgendem Produkt: [Produktname und kurze Beschreibung einfügen].
+Die Bewertung soll zwischen 5 und 15 Sätzen lang sein und menschlich wirken – so, als käme sie von einem echten Käufer mit Erfahrung.
+Gib sowohl positive als auch negative Aspekte wieder, sofern passend.
+Verwende die Sprache: [Deutsch/Englisch]
+Der Tonfall soll: [positiv / neutral / kritisch] sein.
+Baue möglichst relevante Suchbegriffe wie z. B. Qualität, Verarbeitung, Preis-Leistungs-Verhältnis, Versandzeit, Haltbarkeit, Verpackung, Funktionalität usw. sinnvoll ein, um die Rezension informativ und suchmaschinenfreundlich zu gestalten.
+Achte darauf, dass der Text glaubwürdig, konsistent und natürlich formuliert ist – vermeide übertriebene Werbung oder platte Phrasen.`;
+
+    function showTab(id) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`button[onclick="showTab('${id}')"]`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
+
+    function copyText(id) {
+      const textarea = document.getElementById(id);
+      textarea.select();
+      document.execCommand('copy');
+      alert('Text kopiert!');
+    }
+
+    function saveText(tab) {
+      const text = document.getElementById('text-' + tab).value;
+      localStorage.setItem('review-' + tab, text);
+      alert('Text gespeichert!');
+    }
+
+    function showImpressum() {
+      alert("Impressum:\nBjörn Grüdel\nWiesenstr. 2\n45892 Gelsenkirchen\nE-Mail: bgruendel@web.de");
+    }
+
+    function showDatenschutz() {
+      alert("Datenschutzerklärung:\nDiese App verarbeitet keine personenbezogenen Daten.\nEs werden keine Informationen gespeichert oder an Dritte übermittelt.");
+    }
+
+    window.onload = function() {
+      ['aliexpress', 'amazon', 'google'].forEach(tab => {
+        const saved = localStorage.getItem('review-' + tab);
+        document.getElementById('text-' + tab).value = saved || defaultText;
+      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+      }
+    }
+  </script>
+</body>
+</html>
