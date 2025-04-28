@@ -10,75 +10,176 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; color: #333; }
     h1 { color: #e65100; }
-    .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
     .tab-btn { padding: 10px; background: #ddd; border: none; cursor: pointer; }
     .tab-btn.active { background: #e65100; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    textarea { width: 100%; height: 150px; margin-top: 10px; }
+    textarea { width: 100%; height: 250px; margin-top: 10px; }
     button { margin-top: 10px; background: #e65100; color: white; padding: 10px; border: none; cursor: pointer; }
     footer { margin-top: 20px; font-size: 0.8em; text-align: center; color: #777; }
+    footer a { color: #e65100; text-decoration: none; margin: 0 5px; }
+    .legal { display: none; margin-top: 20px; }
+    .legal.active { display: block; }
+    #toast {
+      visibility: hidden;
+      min-width: 200px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 12px;
+      position: fixed;
+      z-index: 1000;
+      bottom: 30px;
+      right: 30px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.5s, bottom 0.5s;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      bottom: 50px;
+    }
   </style>
 </head>
 <body>
   <h1>Pott Fuchs – Bewertungshelfer</h1>
 
-  <div class="tabs">
+  <div class="tabs" id="tabs">
     <button class="tab-btn active" onclick="showTab('aliexpress')">AliExpress</button>
     <button class="tab-btn" onclick="showTab('amazon')">Amazon</button>
     <button class="tab-btn" onclick="showTab('google')">Google</button>
   </div>
 
   <div id="aliexpress" class="tab-content active">
-    <textarea id="text-aliexpress">Hier deine AliExpress-Bewertung...</textarea>
+    <textarea id="text-aliexpress"></textarea>
     <button onclick="copyText('text-aliexpress')">Text kopieren</button>
     <button onclick="saveText('aliexpress')">Text speichern</button>
+    <button onclick="resetText('aliexpress')">Reset auf Standardtext</button>
   </div>
 
   <div id="amazon" class="tab-content">
-    <textarea id="text-amazon">Hier deine Amazon-Bewertung...</textarea>
+    <textarea id="text-amazon"></textarea>
     <button onclick="copyText('text-amazon')">Text kopieren</button>
     <button onclick="saveText('amazon')">Text speichern</button>
+    <button onclick="resetText('amazon')">Reset auf Standardtext</button>
   </div>
 
   <div id="google" class="tab-content">
-    <textarea id="text-google">Hier deine Google-Bewertung...</textarea>
+    <textarea id="text-google"></textarea>
     <button onclick="copyText('text-google')">Text kopieren</button>
     <button onclick="saveText('google')">Text speichern</button>
+    <button onclick="resetText('google')">Reset auf Standardtext</button>
+  </div>
+
+  <!-- Impressum -->
+  <div id="impressum" class="legal">
+    <h2>Impressum</h2>
+    <p><strong>Angaben gemäß § 5 TMG:</strong></p>
+    <p>Björn Grüdel<br>Wiesenstr. 2<br>45892 Gelsenkirchen<br>Deutschland</p>
+    <p><strong>Kontakt:</strong><br>
+    E-Mail: <a href="mailto:bgruendel@web.de">bgruendel@web.de</a></p>
+    <p><strong>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:</strong><br>
+    Björn Grüdel, Adresse wie oben.</p>
+  </div>
+
+  <!-- Datenschutz -->
+  <div id="datenschutz" class="legal">
+    <h2>Datenschutzerklärung</h2>
+    <p>Diese App verarbeitet keine personenbezogenen Daten.</p>
+    <p>Es werden keine personenbezogenen Informationen gespeichert oder an Dritte übermittelt.</p>
+    <p>Gespeicherte Inhalte (z.B. eingegebene Texte) verbleiben ausschließlich auf dem Endgerät des Nutzers (lokale Speicherung).</p>
+    <p>Beim Verwenden der App können technisch notwendige Informationen (z.B. lokale Speichereinträge) genutzt werden, die jedoch keinen Personenbezug haben.</p>
   </div>
 
   <footer>
-    © 2025 Björn Grüdel | <a href="#impressum">Impressum</a> | <a href="#datenschutz">Datenschutz</a>
+    © 2025 Björn Grüdel | 
+    <a href="#impressum" onclick="showLegal('impressum')">Impressum</a> | 
+    <a href="#datenschutz" onclick="showLegal('datenschutz')">Datenschutz</a>
   </footer>
 
+  <!-- Toast Nachricht -->
+  <div id="toast"></div>
+
   <script>
+    const defaultTexts = {
+      aliexpress: `Du agierst als Ghostwriter für authentische Kundenrezensionen auf AliExpress.
+Verfasse eine realistisch klingende, grammatikalisch korrekte und sachlich-neutrale Bewertung zu folgendem Produkt: [Produktname und kurze Beschreibung einfügen].
+Die Bewertung soll zwischen 5 und 15 Sätzen lang sein und menschlich wirken – so, als käme sie von einem echten Käufer mit Erfahrung.
+Gib sowohl positive als auch negative Aspekte wieder, sofern passend.
+WICHTIG: Die Bewertung soll auf ENGLISCH verfasst sein.
+Baue relevante Suchbegriffe wie Qualität, Verarbeitung, Preis-Leistungs-Verhältnis, Versandzeit, Haltbarkeit, Verpackung und Funktionalität sinnvoll ein, um die Rezension informativ und suchmaschinenfreundlich zu gestalten.
+Achte darauf, dass der Text glaubwürdig, konsistent und natürlich formuliert ist – vermeide übertriebene Werbung oder klischeehafte Phrasen.`,
+
+      amazon: `Du agierst als Ghostwriter für authentische Kundenrezensionen auf Amazon.
+Verfasse eine realistisch klingende, grammatikalisch korrekte und positiv gestimmte Bewertung zu folgendem Produkt: [Produktname und kurze Beschreibung einfügen].
+Die Bewertung soll zwischen 5 und 15 Sätzen lang sein und menschlich wirken – so, als käme sie von einem echten Käufer mit Erfahrung.
+Gib hauptsächlich positive Aspekte wieder und betone Vorteile wie Qualität, Verarbeitung, Preis-Leistungs-Verhältnis, Versandgeschwindigkeit, Haltbarkeit, Verpackung und Funktionalität.
+Vermeide übertriebene Werbung und achte auf eine natürliche, glaubwürdige Sprache.`,
+
+      google: `Du agierst als Ghostwriter für authentische Kundenbewertungen auf Google.
+Verfasse eine realistisch klingende, grammatikalisch korrekte und positiv formulierte Bewertung zu folgendem Ort oder Dienstleister: [Name und kurze Beschreibung einfügen].
+Die Bewertung sollte zwischen 5 und 15 Sätzen lang sein und den Eindruck eines echten Besuchers oder Kunden vermitteln.
+Hebe positive Aspekte hervor wie Servicequalität, Freundlichkeit, Preis-Leistung, Ambiente, Erreichbarkeit und Sauberkeit.
+Vermeide übertriebene Lobhudelei und achte auf eine glaubwürdige, natürliche Ausdrucksweise.`
+    };
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.className = 'show';
+      setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+    }
+
     function showTab(id) {
+      hideLegal();
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelector(`button[onclick="showTab('${id}')"]`).classList.add('active');
       document.getElementById(id).classList.add('active');
+      document.querySelector(`button[onclick="showTab('${id}')"]`).classList.add('active');
     }
 
     function copyText(id) {
       const textarea = document.getElementById(id);
       textarea.select();
       document.execCommand('copy');
-      alert('Text kopiert!');
+      showToast('Text kopiert!');
     }
 
     function saveText(tab) {
       const text = document.getElementById('text-' + tab).value;
       localStorage.setItem('review-' + tab, text);
-      alert('Text gespeichert!');
+      showToast('Text gespeichert!');
+    }
+
+    function resetText(tab) {
+      if (confirm('Willst du den Text wirklich auf die Standardvorlage zurücksetzen? Alle Änderungen gehen verloren.')) {
+        document.getElementById('text-' + tab).value = defaultTexts[tab];
+        localStorage.removeItem('review-' + tab);
+        showToast('Standardtext wiederhergestellt!');
+      }
+    }
+
+    function showLegal(page) {
+      document.getElementById('tabs').style.display = 'none';
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.legal').forEach(l => l.classList.remove('active'));
+      document.getElementById(page).classList.add('active');
+    }
+
+    function hideLegal() {
+      document.getElementById('tabs').style.display = 'flex';
+      document.querySelectorAll('.legal').forEach(l => l.classList.remove('active'));
     }
 
     window.onload = function() {
       ['aliexpress', 'amazon', 'google'].forEach(tab => {
         const saved = localStorage.getItem('review-' + tab);
-        if (saved) {
-          document.getElementById('text-' + tab).value = saved;
-        }
+        document.getElementById('text-' + tab).value = saved || defaultTexts[tab];
       });
+
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js');
       }
